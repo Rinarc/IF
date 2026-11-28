@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#10122b">
-<title>无限極人生 · 曙光路</title>
+<title>无限極人生</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.jpeg">
+<link rel="icon" type="image/jpeg" sizes="32x32" href="icons/favicon-32.jpeg">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.jpeg">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -36,6 +36,19 @@
   <div id="minimapWrap" title="点击放大 / 还原小地图">
     <canvas id="minimap" width="96" height="64"></canvas>
     <div id="minimapLabel">—</div>
+  </div>
+
+  <!-- 横屏提示：竖屏时浮出，可一键关掉，不阻断游戏 -->
+  <div id="landscapeTip" class="hidden">
+    <div class="lt-icon">↻</div>
+    <div class="lt-body">
+      <b>横屏体验更佳</b>
+      <span>旋转手机，能看到完整的街区与球场视野</span>
+      <div class="lt-btns">
+        <button id="ltRotate" type="button">切换横屏</button>
+        <button id="ltStay" type="button">继续竖屏</button>
+      </div>
+    </div>
   </div>
 
   <div id="toast"></div>
@@ -68,6 +81,38 @@
     <canvas id="bpCanvas" width="1200" height="800"></canvas>
     <button id="bpSwitch" class="bp-switch">⇄ 切到另一张设计稿</button>
     <div class="bp-tip">C / ESC 返回 · ⇄ 切换曙光路 / 迂龙路稿</div>
+  </div>
+
+  <!-- 汾阳中学 · 半场街头篮球（独立层，黑屏换场进入） -->
+  <div id="bbOverlay" class="hidden" aria-hidden="true">
+    <canvas id="bbCanvas" width="480" height="270"></canvas>
+    <div id="bbFade"></div>
+
+    <div id="bbTop">
+      <div id="bbScore"><span class="bb-me">你 <b id="bbMe">0</b></span><span class="bb-colon">:</span><span class="bb-ai"><b id="bbAi">0</b> 秦磷</span></div>
+      <div id="bbMeta"><span id="bbDiff">中等</span> · <span id="bbPoss">轮到你发球</span> · <span id="bbClock">20</span>s</div>
+      <div class="bb-top-btns">
+        <button id="bbRestart" type="button">↻ 重开</button>
+        <button id="bbExit" type="button">⏹ 退出</button>
+      </div>
+    </div>
+
+    <div id="bbCenterMsg"></div>
+
+    <div id="bbLeft">
+      <div id="bbMove" class="bb-pad"><div class="bb-ring"></div><div class="bb-knob"></div><span>移动</span></div>
+    </div>
+
+    <div id="bbRight">
+      <div class="bb-side-btns">
+        <button id="bbSteal" class="bb-btn" type="button"><b>抢断</b><small>STEAL</small></button>
+        <button id="bbBlock" class="bb-btn" type="button"><b>盖帽/篮板</b><small>BLOCK · REB</small></button>
+      </div>
+      <button id="bbShoot" class="bb-btn shoot" type="button"><b>投篮</b><small>SHOOT</small></button>
+      <div id="bbAct" class="bb-pad"><div class="bb-ring"></div><div class="bb-knob"></div><span>动作</span></div>
+    </div>
+
+    <div id="bbHint">左摇杆移动 · 右摇杆过人/背运/胯下 · 按住投篮键蓄力，绿区松手</div>
   </div>
 
   <div id="help">
@@ -133,5 +178,7 @@
 <script src="js/title.js"></script>
 <script src="js/opening.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/basketball.js"></script>
+<script src="js/orientation.js"></script>
 </body>
 </html>

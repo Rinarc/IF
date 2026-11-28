@@ -7,7 +7,7 @@
  *  · 视频 Range 请求直接放行，保证 iOS / Chrome 能正常播片头
  *  · 只缓存同源 GET；用户贴的外链音乐不拦截
  */
-const VERSION = 'v2.8.0';
+const VERSION = 'v3.2.0';
 const CACHE = 'infinite-lives-' + VERSION;
 
 const PRECACHE = [
@@ -41,7 +41,9 @@ const PRECACHE = [
   './js/main.js',
   './js/title.js',
   './js/opening.js',
-  './js/pwa.js'
+  './js/pwa.js',
+  './js/orientation.js',
+  './js/basketball.js'
 ];
 
 self.addEventListener('install', e => {
