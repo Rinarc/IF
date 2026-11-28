@@ -21,7 +21,9 @@
     { key: 'villa',        name: '林景园 · 别墅',     group: '场景', src: '', hint: 'A / B / C 座通用 · 留空则静默' },
     { key: 'underground',  name: '地下小吃一条街',    group: '场景', src: '', hint: '下沉街 · 留空则静默' },
     { key: 'yuanyu',       name: '渊迂市渊迂中学',    group: '场景', src: '', hint: '第二张稿的校门 · 留空则静默' },
-    { key: 'tram',         name: '有轨电车 · 站台',   group: '场景', src: '', hint: '留空则静默' }
+    { key: 'tram',         name: '有轨电车 · 站台',   group: '场景', src: '', hint: '留空则静默' },
+    { key: 'basketball.1', name: '半场篮球 · 曲 1',   group: '小游戏', src: 'music/streetbattle-1.mp3', hint: 'streetbattle-1.mp3 · 进场与曲 2 随机轮换' },
+    { key: 'basketball.2', name: '半场篮球 · 曲 2',   group: '小游戏', src: 'music/streetbattle-2.mp3', hint: 'streetbattle-2.mp3 · 播完自动随机切歌' }
   ];
   EXTRA.forEach(s => { if (!M.slots.find(q => q.key === s.key)) M.slots.push(s); });
 
@@ -37,6 +39,12 @@
     if (sceneId.indexOf('villa:') === 0) return 'villa';
     if (sceneId === 'underground' || sceneId === 'yuanyu' || sceneId === 'tram' || sceneId === 'estate') return sceneId;
     if (sceneId === 'home' && this.srcFor('home')) return 'home';
+    /* 半场篮球是覆盖层，不换游戏场景，靠 basketball.js 随机 request() 接管；
+       这里也留一个 resolve 分支，方便以后把它做成独立场景 */
+    if (sceneId === 'basketball') {
+      const configured = ['basketball.1', 'basketball.2'].filter(k => this.srcFor(k));
+      return configured.length ? configured[Math.floor(Math.random() * configured.length)] : 'campus';
+    }
     /* 游戏里店内的场景 id 是 interior:店铺ID，而配乐面板的槽位是 shop:店铺ID。
        这里做一次映射，让「每家店单独放歌」真正生效；没填的仍回落到 shop.default。 */
     if (sceneId.indexOf('interior:') === 0) {

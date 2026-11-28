@@ -78,7 +78,8 @@
         D.rect(ctx, e.x - 6, e.y - 17, 12, 1, P.gold);
         A.person(ctx, e.x - 6, e.y - 15, e.dir, e.frame, e.colors, 1);
       } else {
-        A.person(ctx, e.x - 6, e.y - 15, e.dir, e.frame, { body: e.color, hair: '#2a2a3e' }, 1);
+        A.person(ctx, e.x - 6, e.y - 15, e.dir, e.frame,
+          { body: e.color, hair: e.hair || '#2a2a3e', skin: e.skin || '#f2c39a' }, 1);
         if (U.dist(e.x, e.y, p.x, p.y) < 70 && !(t.targetId && t.targetId === 'npc_' + e.id)) {
           D.rect(ctx, e.x - 18, e.y - 26, 36, 8, 'rgba(16,18,48,.72)');
           D.text(ctx, e.name.slice(0, 5), e.x, e.y - 25, 6, '#ffe9a8', 'center');

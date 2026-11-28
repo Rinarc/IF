@@ -215,7 +215,7 @@
         b.addEventListener('click', () => {
           PC.Audio.sfx('click');
           const res = o.onPick ? o.onPick() : null;
-          if (typeof res === 'string' && res !== '__close') this.showResult(cfg.title, res);
+          if (typeof res === 'string' && res !== '__close' && res !== '__keep') this.showResult(cfg.title, res);
           else if (res !== '__keep') this.closeDialog();
         });
         box.appendChild(b);

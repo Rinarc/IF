@@ -1114,7 +1114,9 @@
     s.points.push({ id: 'schoolEnter', type: 'schoolEnter', x: 28 * T, y: 15 * T, label: '🏫 靠近教学楼门廊 · 黑屏进入楼内（1F 中心花园）' });
     s.points.push({ id: 'notice', type: 'sign', x: 26 * T, y: 31 * T, label: '🏫 校园 · 栅栏围住整片学校', board: 'notice' });
     s.points.push({ id: 'track', type: 'sign', x: 12 * T, y: 6 * T, label: '🏃 操场 · 左后侧', board: 'track' });
-    s.points.push({ id: 'basketball', type: 'sign', x: 11 * T, y: 18 * T, label: '🏀 四宫格篮球场 · 2×2', board: 'basketball' });
+    s.points.push({ id: 'basketball', type: 'sign', x: 5 * T, y: 15 * T, label: '🏀 四宫格篮球场 · 2×2 · 看板', board: 'basketball' });
+    /* 体育老师秦磷守着半场，按 A 可以挑难度打一场街头篮球 */
+    s.points.push({ id: 'bballGame', type: 'basketballGame', x: 11 * T, y: 20 * T, label: '🏀 秦磷老师 · 来打半场街头篮球（选难度）' });
     s.points.push({ id: 'photoFenyang', type: 'photo', x: 28 * T, y: 30 * T, label: '📸 打卡 · 汾阳中学这一整栋楼', spot: 'fenyang_gate' });
     s.points.push({ id: 'job_campus', type: 'jobs', x: 36 * T, y: 30 * T, label: '💼 校园零工 · 值日 / 抄笔记', ctx: 'campus' });
     s.points.push({ id: 'schoolBell', type: 'schoolBell', x: 37 * T, y: 30 * T, label: '🕖 作息钟 · 7:40 上学潮 / 18:00 放学' });
@@ -1125,6 +1127,9 @@
     s.npcs.push({ name: '拍照的家长', color: '#d99b1f', x: 30 * T, y: 18 * T, stationary: true, dir: 2, frame: 0, id: 'parent' });
     s.npcs.push({ name: '返校的校友', color: '#4fb8a8', x: 12 * T, y: 28 * T, path: [{ x: 12 * T, y: 28 * T }, { x: 28 * T, y: 30 * T }, { x: 28 * T, y: 16 * T }, { x: 12 * T, y: 28 * T }], pi: 0, wait: 0, dir: 1, frame: 0, id: 'alumni' });
     s.npcs.push({ name: '打篮球的同学', color: '#ffb347', x: 6 * T, y: 16 * T, stationary: true, dir: 1, frame: 0, id: 'hoop' });
+    /* 秦磷：体育老师，黑皮，站在四宫格半场里；靠近按 A 触发半场篮球 */
+    s.npcs.push({ name: '秦磷', color: '#ffd25a', skin: '#4a2c1c', hair: '#191922',
+      x: 10 * T, y: 18 * T, stationary: true, dir: 1, frame: 0, id: 'qinlin' });
     s.npcs.push({ name: '浇花的园丁', color: '#7fe0c8', x: 40 * T, y: 26 * T, stationary: true, dir: 3, frame: 0, id: 'gardener' });
 
     s.spawn = { x: 28 * T, y: 30 * T };
@@ -2794,35 +2799,81 @@
         break;
       }
       case 'basketQuad': {
-        // 2×2 四宫格：四片场地共用边框，中间十字走道，整体像田字
+        /* 2×2 四宫格：四片场子共用同一份皮肤主题，换肤时四块一起变。
+           主题来自 js/basketball.js 的 PC.Basketball.theme()；
+           该文件在本文件之后加载，但这里是运行时绘制，此时已就绪。 */
+        const B = PC.Basketball;
+        const th = (B && B.theme && B.theme()) || {
+          floor: '#2f6b63', floor2: '#3b7d6f', skirt: '#24544e', line: '#f4f1e4',
+          lineSoft: 'rgba(244,241,228,.55)', rim: '#e2564d', board: 'rgba(169,207,224,.55)',
+          accent: '#e2564d', text: '#fff3c4', glow: false, deco: 'grass', pattern: 'grain', label: 'NO.'
+        };
+        const sk = (B && B.skin && B.skin()) || { name: '塑胶绿地', en: 'CLASSIC' };
         const cw = Math.floor((w - 2) / 2), ch = Math.floor((h - 2) / 2);
+
         const court = (qx, qy, qww, qhh, no) => {
-          D.rect(ctx, qx, qy, qww, qhh, '#2f6b63');
-          D.rect(ctx, qx + 2, qy + 2, qww - 4, qhh - 4, '#3b7d6f');
-          D.frame(ctx, qx + 2, qy + 2, qww - 4, qhh - 4, '#f4f1e4', 2);
-          D.line(ctx, qx + qww / 2, qy + 2, qx + qww / 2, qy + qhh - 2, '#f4f1e4', 2);
-          ctx.strokeStyle = '#f4f1e4'; ctx.lineWidth = 2;
+          D.rect(ctx, qx, qy, qww, qhh, th.skirt);
+          D.rect(ctx, qx + 2, qy + 2, qww - 4, qhh - 4, th.floor);
+          // 皮肤纹理：全息网格 / 电路 / 青砖 / 塑胶颗粒
+          for (let i = 0; i < 26; i++) {
+            const gx = qx + 4 + ((i * 13) % Math.max(1, qww - 8));
+            const gy = qy + 4 + ((i * 9) % Math.max(1, qhh - 8));
+            if (th.pattern === 'grid') {
+              D.line(ctx, gx, gy, gx + 5, gy, 'rgba(143,240,255,.22)', 1);
+            } else if (th.pattern === 'circuit') {
+              D.rect(ctx, gx, gy, 2, 2, i % 2 ? 'rgba(255,124,229,.45)' : 'rgba(127,224,200,.5)');
+            } else if (th.pattern === 'brick') {
+              D.rect(ctx, gx, gy, 5, 1, 'rgba(244,236,216,.22)');
+            } else {
+              D.rect(ctx, gx, gy, 2, 1, i % 2 ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.10)');
+            }
+          }
+          // 内场稍亮一块
+          D.rect(ctx, qx + 5, qy + 5, qww - 10, qhh - 10, th.floor2);
+          if (th.glow) {
+            ctx.save(); ctx.shadowColor = th.line; ctx.shadowBlur = 6;
+            D.frame(ctx, qx + 2, qy + 2, qww - 4, qhh - 4, th.line, 2);
+            ctx.restore();
+          } else {
+            D.frame(ctx, qx + 2, qy + 2, qww - 4, qhh - 4, th.line, 2);
+          }
+          D.line(ctx, qx + qww / 2, qy + 2, qx + qww / 2, qy + qhh - 2, th.line, 2);
+          ctx.strokeStyle = th.line; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.arc(qx + qww / 2, qy + qhh / 2, Math.min(qww, qhh) * .17, 0, Math.PI * 2); ctx.stroke();
           [0, 1].forEach(side => {
             const cx2 = side ? qx + qww : qx;
             ctx.beginPath(); ctx.arc(cx2, qy + qhh / 2, qhh * .38, -Math.PI / 2, Math.PI / 2, side === 1); ctx.stroke();
             const bx2 = side ? qx + qww - 14 : qx + 6, by2 = qy + qhh / 2;
-            D.rect(ctx, bx2, by2 - 9, 10, 14, '#f4f1e4');
-            D.rect(ctx, bx2 + 1, by2 - 8, 8, 12, 'rgba(255,255,255,.32)');
-            D.rect(ctx, side ? bx2 - 7 : bx2 + 10, by2 - 2, 7, 3, '#e2564d');
-            D.rect(ctx, bx2 + 4, by2 + 5, 2, 10, '#8f92b5');
+            // 篮板：皮肤玻璃色 + 主题边框
+            D.rect(ctx, bx2, by2 - 9, 10, 14, th.line);
+            D.rect(ctx, bx2 + 1, by2 - 8, 8, 12, th.board);
+            D.rect(ctx, bx2 + 2, by2 - 5, 6, 6, th.rim);
+            D.rect(ctx, side ? bx2 - 7 : bx2 + 10, by2 - 2, 7, 3, th.rim);
+            D.rect(ctx, bx2 + 4, by2 + 5, 2, 10, th.accent);
           });
-          D.text(ctx, 'NO.' + no, qx + qww / 2, qy + 4, 6, '#f4f1e4', 'center', true);
+          // 皮肤铭牌（每片都写，四块一起变）
+          D.text(ctx, th.label + no, qx + qww / 2, qy + 4, 6, th.text, 'center', true);
+          if (th.deco === 'lantern') {
+            D.rect(ctx, qx + 4, qy + qhh - 8, 3, 4, '#b23b32');
+            D.rect(ctx, qx + qww - 7, qy + qhh - 8, 3, 4, '#b23b32');
+          } else if (th.deco === 'circuit' || th.deco === 'grid') {
+            D.rect(ctx, qx + 4, qy + qhh - 7, 4, 2, th.accent);
+            D.rect(ctx, qx + qww - 8, qy + qhh - 7, 4, 2, th.accent);
+          }
         };
         court(x + 1, y + 1, cw - 1, ch - 1, 1);
         court(x + cw + 2, y + 1, cw - 1, ch - 1, 2);
         court(x + 1, y + ch + 2, cw - 1, ch - 1, 3);
         court(x + cw + 2, y + ch + 2, cw - 1, ch - 1, 4);
-        // 中间十字走道
-        D.rect(ctx, x + cw, y, 2, h, '#d6d2be');
-        D.rect(ctx, x, y + ch, w, 2, '#d6d2be');
-        D.line(ctx, x + cw + 1, y, x + cw + 1, y + h, 'rgba(120,116,150,.35)', 1);
-        D.line(ctx, x, y + ch + 1, x + w, y + ch + 1, 'rgba(120,116,150,.35)', 1);
+        // 中间十字走道：随皮肤换色
+        const walk = th.deco === 'circuit' ? '#2b1757' : th.deco === 'grid' ? '#0e2b4d'
+          : th.deco === 'lantern' ? '#8a8574' : '#d6d2be';
+        D.rect(ctx, x + cw, y, 2, h, walk);
+        D.rect(ctx, x, y + ch, w, 2, walk);
+        D.line(ctx, x + cw + 1, y, x + cw + 1, y + h, th.lineSoft, 1);
+        D.line(ctx, x, y + ch + 1, x + w, y + ch + 1, th.lineSoft, 1);
+        // 整片球场外的皮肤标记（一眼能看出换了哪套）
+        D.text(ctx, sk.en, x + w / 2, y + h - 3, 5, th.text, 'center', true);
         break;
       }
       case 'schoolCorridor': {

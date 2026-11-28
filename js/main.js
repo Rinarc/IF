@@ -572,6 +572,85 @@
   function dialogFor(title, text, extra) {
     UI.showDialog({ title, text, options: (extra || []).concat([{ label: '走开', onPick: () => null }]) });
   }
+  /* ---------------- 汾阳中学 · 秦磷的半场街头篮球 ---------------- */
+  function basketballStatus() {
+    const B = PC.Basketball;
+    const pr = B && B.progress ? B.progress() : { games: 0, skin: 'default', seen: ['default'] };
+    const bo = B && B.bonuses ? B.bonuses() : { shoot: 0, rebound: 0, steal: 0, games: 0 };
+    const SK = B && B.skins ? B.skins() : [];
+    const cur = SK.find(k => k.id === pr.skin) || SK[0] || { name: '塑胶绿地' };
+    const next = SK.find(k => k.need > pr.games);
+    return { pr, bo, SK, cur, next };
+  }
+
+  function skinDialog() {
+    const B = PC.Basketball, q = basketballStatus();
+    const txt = '秦磷把四片场子的钥匙串在指尖晃了晃：\n' +
+      '「换哪套？你出钱升级的场子，四片一起换，我这边半场也跟着变。」\n\n' +
+      '累计打完 ' + q.pr.games + ' 局　·　当前：' + (q.cur.icon || '🏀') + ' ' + q.cur.name + '\n' +
+      (q.next ? '下一套：' + q.next.icon + ' ' + q.next.name + '（还差 ' + (q.next.need - q.pr.games) + ' 局）'
+              : '全部四套球场已解锁 🏆') +
+      '\n\n换上的皮肤会同时用在半场小游戏和校园四片球场。';
+    const opts = q.SK.map(k => {
+      const ok = k.need === 0 || q.pr.seen.indexOf(k.id) >= 0;
+      const using = q.pr.skin === k.id;
+      return {
+        label: (ok ? (using ? '✅ ' : '🎨 ') : '🔒 ') + (k.icon || '🏀') + ' ' + k.name + ' / ' + k.en +
+          ' —— ' + (ok ? (using ? '正在使用 · ' + k.desc : k.desc || '点击换上')
+                        : '还需 ' + (k.need - q.pr.games) + ' 局解锁'),
+        onPick: () => {
+          if (!ok) { UI.toast('🔒 再和秦磷打 ' + (k.need - q.pr.games) + ' 局就解锁了'); return '__keep'; }
+          const r = B.setSkin(k.id);
+          UI.toast(r.msg);
+          PC.Audio.sfx('ok');
+          basketballDialog();                 // 刷新一下局数/皮肤信息
+          return '__keep';
+        }
+      };
+    });
+    opts.push({ label: '← 返回「挑难度」', onPick: () => { basketballDialog(); return '__keep'; } });
+    UI.showDialog({ title: '🎨 汾阳中学 · 四片篮球场换肤', text: txt, options: opts });
+  }
+
+  function basketballDialog() {
+    const D = PC.BBALL_DIFFS || [];
+    const N = PC.BBALL_NPC || { name: '秦磷', title: '体育老师' };
+    const q = basketballStatus(), pr = q.pr, bo = q.bo;
+    const bonusLine = '命中 +' + bo.shoot.toFixed(1) + '　篮板 +' + bo.rebound.toFixed(1) +
+      '　抢断 +' + bo.steal.toFixed(1) + '（每 2 / 3 / 5 局各 +0.1，上限 +0.5）';
+    const txt = N.name + '（' + N.title + '）把球在指尖转了一圈：\n' +
+      '「四片场子归我管。挑个难度，咱打半场，轮着发球，先进 11 分的赢。」\n\n' +
+      '📊 已打 ' + pr.games + ' 局　·　' + bonusLine + '\n' +
+      '🎨 球场：' + (q.cur.icon || '🏀') + ' ' + q.cur.name +
+      (q.next ? '　·　下一套 ' + q.next.name + ' 还差 ' + (q.next.need - pr.games) + ' 局' : '　·　四套全解锁 🏆') + '\n\n' +
+      '进场后：左摇杆移动，右摇杆过人 / 背运 / 胯下 / 后撤 / 转身 / 欧洲步；\n' +
+      '按住「投篮」蓄力、绿区松手（或点两次）；秦磷持球时按它变成举手干扰。\n' +
+      'F 抢断 / G 盖帽篮板。球权转换后秦磷会运球带出三分线，只有换回合才回发球位。\n' +
+      '随时「⏹ 退出」或「↻ 重开」，Esc / R 也行。';
+    const opts = D.map(d => ({
+      label: '🏀 ' + d.name + ' / ' + d.en + ' —— ' + d.desc,
+      onPick: () => {
+        UI.toast('🏀 黑屏换场 · ' + d.name + ' · 对手 ' + N.name);
+        fadeTo(() => {
+          if (!PC.Basketball) return;
+          PC.Basketball.setOnExit(() => {
+            player.x = 12 * C.TILE; player.y = 22 * C.TILE;
+            savePos();
+            UI.toast('🏀 回到汾阳中学篮球场');
+          });
+          PC.Basketball.start(d.id);
+        });
+        return null;
+      }
+    }));
+    opts.push({
+      label: '🎨 更换球场皮肤（当前 ' + (q.cur.icon || '🏀') + q.cur.name + '）',
+      onPick: () => { skinDialog(); return '__keep'; }
+    });
+    opts.push({ label: '先不打，走开', onPick: () => null });
+    UI.showDialog({ title: '🏀 ' + N.name + ' · ' + N.title + ' · 半场街头篮球', text: txt, options: opts });
+  }
+
   function readAd(key) {
     const a = PC.ADS[key]; if (!a) return;
     const opts = [];
@@ -647,6 +726,7 @@
     });
   }
   function npcDialog(n) {
+    if (n.name === '秦磷' && PC.Basketball) { basketballDialog(); return; }
     const lines = PC.NPC_LINES[n.name] || ['「今天这条街挺热闹。」', '「慢慢逛，不着急。」'];
     const bond = PC.Play ? PC.Play.bondInfo(n.name) : { lv: 0, next: 10, max: false };
     UI.showDialog({
@@ -681,6 +761,7 @@
     }
     switch (pt.type) {
       /* ---- 汾阳中学：黑屏进楼 / 六层 / 每一间都能进 ---- */
+      case 'basketballGame': basketballDialog(); break;
       case 'schoolBell': {
         const jump = (mi, label) => {
           St.d().minute = mi; t.night = St.isNight(); rushKey = '';
@@ -780,6 +861,7 @@
     }
   }
   function interact() {
+    if (PC.Basketball && PC.Basketball.active) return;   // 篮球半场里不触发街区交互
     if (!started || UI.isOpen()) return;
     const pt = currentTarget || E.nearest(scene, player, C.INTERACT_R);
     if (!pt) { UI.toast('附近没有能交互的东西，走近发光的小标记'); PC.Audio.sfx('error'); return; }
@@ -880,6 +962,7 @@
   const MOVE = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r', w: 'u', s: 'd', a: 'l', d: 'r', W: 'u', S: 'd', A: 'l', D: 'r' };
   window.addEventListener('keydown', e => {
     if (intro.phase !== 'play') return;
+    if (PC.Basketball && PC.Basketball.active) return;   // 篮球半场用自己的键盘映射
     if (MOVE[e.key]) { keys[MOVE[e.key]] = true; e.preventDefault(); }
     if (e.key === 'Shift') keys.run = true;
     if (e.key === ' ' || e.key === 'e' || e.key === 'E' || e.key === 'j' || e.key === 'J') { e.preventDefault(); interact(); }
@@ -936,6 +1019,7 @@
   function frame(ts) {
     const dt = Math.min((ts - last) / 1000 || .016, .05);
     last = ts; t.time += dt;
+    const bb = !!(PC.Basketball && PC.Basketball.active);   // 半场篮球进行时冻结街区
     updateIntro(dt);
 
     if (started) {
@@ -949,7 +1033,7 @@
         St.logMsg('列车进站：' + to + ' · 请先下后上');
       }
       const open = UI.isOpen();
-      if (!open) {
+      if (!open && !bb) {
         const input = getInput();
         E.updatePlayer(player, input, dt, scene);
         E.updateNPCs(scene, dt, t);
@@ -957,11 +1041,15 @@
         if (player.moving && PC.Play) PC.Play.steps(dt * (player.run ? 2 : 1));
         PC.Events.update(dt, player.moving, open, scene.id);
       }
-      St.tick(dt, player.run && player.moving);
-      syncSchoolRush();                      // 7:40 上学潮 / 18:00 放学潮
-      PC.Phone.tick();                       // 外卖按游戏时间送达
-      PC.Minimap.tick(scene, player, t);     // 揭开迷雾 + 重绘小地图
-      currentTarget = E.nearest(scene, player, C.INTERACT_R);
+      if (!bb) {
+        St.tick(dt, player.run && player.moving);
+        syncSchoolRush();                      // 7:40 上学潮 / 18:00 放学潮
+        PC.Phone.tick();                       // 外卖按游戏时间送达
+        PC.Minimap.tick(scene, player, t);     // 揭开迷雾 + 重绘小地图
+        currentTarget = E.nearest(scene, player, C.INTERACT_R);
+      } else {
+        currentTarget = null;
+      }
       t.targetId = currentTarget ? currentTarget.id : null;
       saveTimer += dt; hudTimer += dt;
       if (saveTimer > 5) { saveTimer = 0; savePos(); St.save(); }
@@ -993,7 +1081,7 @@
     ctx.translate(-Math.round(cam.x), -Math.round(cam.y));
     E.draw(ctx, scene, player, t);
     ctx.restore();
-    if (started && !UI.isOpen() && currentTarget) E.drawHint(ctx, player, currentTarget, t, cam, C.VIEW_W / z);
+    if (started && !bb && !UI.isOpen() && currentTarget) E.drawHint(ctx, player, currentTarget, t, cam, C.VIEW_W / z);
     ctx.restore();
     overlay();
     if (intro.phase === 'teleport' || intro.phase === 'camera') drawIntroFx();
@@ -1041,7 +1129,7 @@
     tramGateDialog, tramPlatformDialog, screenYDialog,
     estateDialog, estateGymDialog, estatePondDialog, aptDoorDialog, villaDoorDialog,
     get districtFrom() { return districtFrom; }, get rideFrom() { return rideFrom; },
-    get started() { return started; }, get intro() { return intro; }, fadeTo, syncSchoolRush, schoolPhase
+    get started() { return started; }, get intro() { return intro; }, fadeTo, syncSchoolRush, schoolPhase, basketballDialog, skinDialog
   };
   requestAnimationFrame(frame);
 })();

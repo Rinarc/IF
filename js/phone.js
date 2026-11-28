@@ -1,9 +1,7 @@
-/* phone.js —— 无限極人生 OS：一台真的手机
- * 桌面 + 12 个 App（街区 / 外卖 / 相机 / 音乐 / 相册 / 家 / 目标 / 游戏 / 背包 / 赚钱 / 房产 / 设置）
+/* phone.js —— 手机系统
+ * 设备外壳 / 状态栏 / 灵动岛 / 锁屏 / 通知中心 / 控制中心 / 桌面 / 13 个 App
  * 按 P 或点 HUD 右上 📱 打开。所有数据存进 St.d().phone，随自动存档走。
- *
- * 🎵 音乐 App 会接管游戏自动配乐（见 music-player.js）：
- *    选歌后换场景不打断，点「关掉音乐 / 恢复游戏配乐」立刻回到原本按场景播放的那首。
+ * 这里只做「系统」：不再往屏幕里塞教程文案与游戏提示，App 内容就是内容。
  */
 (function () {
   const PC = window.PC = window.PC || {};
@@ -62,6 +60,7 @@
   /* ---------------- 桌面 App 表 ---------------- */
   const APPS = [
     { id: 'feed',     icon: '📰', name: '街区',   color: '#e2564d', desc: '刷帖 · 30 条' },
+    { id: 'sms',      icon: '💬', name: '信息',   color: '#4fb8a8', desc: '' },
     { id: 'delivery', icon: '🛵', name: '外卖',   color: '#ffb347', desc: '送到你所在的地方' },
     { id: 'camera',   icon: '📷', name: '相机',   color: '#4fb8a8', desc: '取景 / 滤镜 / 打卡' },
     { id: 'music',    icon: '🎵', name: '音乐',   color: '#c05b86', desc: '全曲库 · 接管配乐' },
@@ -87,6 +86,7 @@
     if (!Array.isArray(p.orders)) p.orders = [];
     if (!Array.isArray(p.album)) p.album = [];
     if (!Array.isArray(p.fav)) p.fav = [];
+    if (!Array.isArray(p.sms)) p.sms = [];
     if (typeof p.wall !== 'number') p.wall = 0;
     return p;
   }
@@ -123,52 +123,139 @@
   let musicQuery = '';
   let tickCount = 0;
   let camFlashPending = false;
+  /* 系统状态：锁屏 / 通知中心 / 控制中心 / 信息详情 / 屏幕亮度 */
+  let locked = false, lastClose = 0, showNotify = false, showControl = false;
+  let smsOpen = -1, bright = 1;
+  const cc = [false, true, true, true, false, false];   // 飞行 / 蜂窝 / Wi-Fi / 蓝牙 / 静音 / 方向锁
 
   function open(which) {
     screen = (which && APP_BY_ID[which]) ? which : 'desk';
+    locked = Date.now() - lastClose > 20000;   // 刚合上不久直接回桌面，像还没熄屏
+    showNotify = false; showControl = false; smsOpen = -1;
     PC.Audio.sfx('bag');
     draw();
   }
   function toggle() {
     const UI = PC.UI;
-    if (UI.panelOpen && $('panelTitle').textContent.indexOf('📱') >= 0) { UI.closePanel(); return; }
+    if (UI.panelOpen && $('panelTitle').textContent.indexOf('📱') >= 0) {
+      lastClose = Date.now(); UI.closePanel(); return;
+    }
     open('desk');
   }
   function go(id) {
     if (screen === 'games' && PC.Play) PC.Play.stopGame();
     screen = APP_BY_ID[id] ? id : 'desk';
+    locked = false; showNotify = false; showControl = false; smsOpen = -1;
     PC.Audio.sfx('click');
     draw();
   }
 
-  /* ---------------- 外壳 ---------------- */
+  /* ---------------- 系统外壳 ---------------- */
+  function battLevel() { return Math.max(18, 96 - (Math.floor(absMin() / 40) % 62)); }
+  function weekDay() { return ['日', '一', '二', '三', '四', '五', '六'][St.d().day % 7]; }
+  function shortScene() {
+    const l = (PC.Main && PC.Main.scene) ? PC.Main.scene.label : '曙光路';
+    return String(l).split(' / ')[0];
+  }
+
   function statusBar() {
-    const d = St.d(), M = PC.Music;
-    const batt = Math.max(18, 96 - (Math.floor(absMin() / 40) % 62));
-    const manual = M && M.isManual && M.isManual();
-    return '<div class="ph-status"><span id="phClock">' + St.timeStr() +
-      '</span><span>' + (manual ? '🎵 ' : '') + '5G ▮▮▮　🔋 ' + batt + '%</span></div>' +
-      '<div class="ph-wallet">📱 无限極人生 OS · 钱包 <b>' + U.money(d.money) +
-      '</b>　体力 ' + Math.round(d.stamina) + '</div>';
+    const batt = battLevel();
+    return '<div class="ph-status">' +
+      '<button class="ph-sb-left" data-ph="notify"><span id="phClock">' + St.timeStr() + '</span></button>' +
+      '<div class="ph-sb-right">' +
+        '<span class="ph-signal"><i></i><i></i><i></i><i></i></span>' +
+        '<span class="ph-wifi"></span>' +
+        '<button class="ph-batt' + (batt < 25 ? ' low' : '') + '" data-ph="control">' +
+          '<span class="ph-batt-fill" style="width:' + Math.round(batt / 100 * 19) + 'px"></span>' +
+        '</button>' +
+      '</div></div>';
   }
   function appBar(a) {
-    return '<div class="ph-appbar"><button class="mini" data-ph="desk">← 桌面</button>' +
-      '<b>' + a.icon + ' ' + U.escape(a.name) + '</b><span>' + U.escape(a.desc) + '</span></div>';
+    return '<div class="ph-appbar"><button class="ph-back" data-ph="desk">‹</button>' +
+      '<b>' + a.icon + ' ' + U.escape(a.name) + '</b></div>';
   }
-  function homeBar() {
-    return '<button class="ph-homebar" data-ph="desk">⌂　回桌面</button>';
-  }
+  function homeBar() { return ''; }
   function dockHTML() {
     return '<div class="ph-dock">' + DOCK.map(id => {
       const a = APP_BY_ID[id];
-      return '<button class="ph-dock-app' + (screen === id ? ' on' : '') + '" data-ph="app:' + id + '">' +
-        a.icon + '<small>' + a.name + '</small></button>';
+      return '<button class="ph-dock-app' + (screen === id ? ' on' : '') +
+        '" data-ph="app:' + id + '" style="--appc:' + a.color + '">' +
+        '<span class="ph-dock-ic">' + a.icon + '</span><small>' + a.name + '</small></button>';
     }).join('') + '</div>';
+  }
+
+  /* 锁屏：只有时间、日期、天气与系统卡片，不写任何「怎么解锁」的文字 */
+  function lockHTML() {
+    const d = St.d(), w = St.weather(), batt = battLevel();
+    const M = PC.Music, manual = M && M.isManual && M.isManual();
+    let cards = '<div class="ph-lock-card"><i>🔋</i><div><b>' + batt + '%</b><small>电池</small></div></div>' +
+      '<div class="ph-lock-card"><i>🌤</i><div><b>' + U.escape(w.name) + ' ' + St.tempAt() +
+        '°C</b><small>' + U.escape(shortScene()) + '</small></div></div>';
+    if (manual && M.nowPlaying) {
+      const np = M.nowPlaying();
+      cards += '<div class="ph-lock-card"><i>🎵</i><div><b>' + U.escape(np.name) +
+        '</b><small>' + (np.playing ? '正在播放' : '已暂停') + '</small></div></div>';
+    }
+    return '<div class="ph-lock">' +
+      '<button class="ph-lock-tap" data-ph="unlock"></button>' +
+      '<div class="ph-lock-inner">' +
+        '<div class="ph-lock-date">D' + d.day + ' · 周' + weekDay() + '</div>' +
+        '<div class="ph-lock-clock" id="phLockClock">' + St.timeStr() + '</div>' +
+        '<div class="ph-lock-weather">' + U.escape(w.name) + '　' + St.tempAt() + '°C</div>' +
+      '</div>' +
+      '<div class="ph-lock-cards">' + cards + '</div>' +
+      '<div class="ph-lock-status"><span class="ph-signal"><i></i><i></i><i></i><i></i></span>' +
+        '<span class="ph-wifi"></span><span class="ph-batt"><span class="ph-batt-fill" style="width:' +
+        Math.round(batt / 100 * 19) + 'px"></span></span></div>' +
+      '<div class="ph-lock-quick">' +
+        '<button data-ph="cctorch">🔦</button><button data-ph="app:camera">📷</button></div></div>';
+  }
+
+  /* 通知中心：系统自己的卡片，不塞游戏引导 */
+  function notifyHTML() {
+    const w = St.weather(), batt = battLevel();
+    const M = PC.Music, manual = M && M.isManual && M.isManual();
+    let h = '<div class="ph-overlay"><button class="ph-overlay-bg" data-ph="closeSheets"></button>' +
+      '<div class="ph-sheet"><div class="ph-sheet-handle"></div>' +
+      '<div class="ph-sheet-date">D' + St.d().day + ' · 周' + weekDay() + '　' + St.timeStr() + '</div>';
+    h += '<div class="ph-ncard"><i>🌤</i><div><b>' + U.escape(w.name) + ' ' + St.tempAt() +
+      '°C</b><small>天气 · ' + U.escape(shortScene()) + '</small></div></div>';
+    h += '<div class="ph-ncard"><i>🔋</i><div><b>' + batt + '%</b><small>电池</small></div></div>';
+    if (manual && M.nowPlaying) {
+      const np = M.nowPlaying();
+      h += '<div class="ph-ncard"><i>🎵</i><div><b>' + U.escape(np.name) + '</b><small>' +
+        (np.playing ? '正在播放' : '已暂停') + '</small></div>' +
+        '<button class="mini" data-ph="mstop">⏹</button></div>';
+    }
+    h += '<div class="ph-ncard"><i>📅</i><div><b>' + St.timeStr() + '</b><small>时钟</small></div></div>';
+    return h + '</div></div>';
+  }
+
+  /* 控制中心：开关、亮度、音量、快捷 */
+  function controlHTML() {
+    const M = PC.Music, np = M && M.nowPlaying ? M.nowPlaying() : { volume: .55 };
+    const items = [['✈️', '飞行模式'], ['📶', '蜂窝数据'], ['🛜', 'Wi-Fi'],
+                   ['🔵', '蓝牙'], ['🔕', '静音'], ['🔒', '方向锁定']];
+    let h = '<div class="ph-overlay"><button class="ph-overlay-bg" data-ph="closeSheets"></button>' +
+      '<div class="ph-cc"><div class="ph-sheet-handle"></div><div class="ph-cc-grid">';
+    items.forEach((it, i) => {
+      h += '<button class="ph-cc-t' + (i === 4 ? ' mute' : '') + (cc[i] ? ' on' : '') +
+        '" data-ph="cctoggle:' + i + '"><i>' + it[0] + '</i>' + it[1] + '</button>';
+    });
+    h += '</div>';
+    h += '<div class="ph-cc-slider"><span>☀</span><input type="range" min="60" max="120" value="' +
+      Math.round(bright * 100) + '" data-ph="bright"><span>' + Math.round(bright * 100) + '%</span></div>';
+    h += '<div class="ph-cc-slider"><span>🔊</span><input type="range" min="0" max="100" value="' +
+      Math.round(np.volume * 100) + '" data-ph="volrange"><span>' + Math.round(np.volume * 100) + '%</span></div>';
+    h += '<div class="ph-cc-quick"><button data-ph="cctorch">🔦 手电</button>' +
+      '<button data-ph="app:camera">📷 相机</button><button data-ph="wall">🖼 墙纸</button></div>';
+    return h + '</div></div>';
   }
 
   /* ---------------- 🏠 桌面 ---------------- */
   function badge(id) {
     const p = P(), d = St.d();
+    if (id === 'sms') { const n = p.sms.filter(m => m.unread).length; return n ? String(n) : ''; }
     if (id === 'delivery' && p.pending) return '1';
     if (id === 'feed') {
       if (!p.feed.length) return '新';
@@ -185,52 +272,71 @@
     return '';
   }
   function deskHTML() {
-    const p = P(), d = St.d(), night = St.isNight();
-    const scene = (PC.Main && PC.Main.scene) ? PC.Main.scene.label : '曙光路';
-    const week = ['日', '一', '二', '三', '四', '五', '六'][d.day % 7];
-    const q = QUOTES[(d.day * 3 + Math.floor(d.minute / 180)) % QUOTES.length];
-    let h = '<div class="ph-wall wall' + (p.wall % 4) + (night ? ' night' : '') + '">' +
-      '<div class="ph-wall-date">D' + d.day + ' · 周' + week + '</div>' +
-      '<div class="ph-wall-big">INFINITY LIVES</div>' +
-      '<div class="ph-wall-sub">' + U.escape(scene) + '　' + St.weather().name + ' ' + St.tempAt() + '°C</div>' +
-      '<div class="ph-wall-quote">' + U.escape(q) + '</div></div>';
-
-    // 通知卡
-    let notices = '';
-    if (p.pending) {
-      notices += '<button class="ph-notify" data-ph="app:delivery">🛵 <b>外卖在路上</b> · ' +
-        U.escape(PC.ITEMS[p.pending.item].name) + '　约 ' + Math.max(0, Math.ceil(p.pending.at - absMin())) + ' 分钟后到 ›</button>';
-    }
-    if (PC.Music && PC.Music.isManual && PC.Music.isManual()) {
-      const np = PC.Music.nowPlaying();
-      notices += '<button class="ph-notify music" data-ph="app:music">🎵 <b>正在播放 · ' + U.escape(np.name) +
-        '</b>　手动接管中，点「关掉音乐」可恢复游戏配乐 ›</button>';
-    }
-    if (PC.Play) {
-      const q2 = PC.Play.ensure(d);
-      const can = q2.challenges.filter(c => {
-        const ch = PC.Play.CHALLENGES.find(x => x.id === c);
-        return ch && !q2.claimed.includes(c) && PC.Play.progress(d, ch) >= ch.goal;
-      }).length;
-      if (can) notices += '<button class="ph-notify" data-ph="app:goals">🎯 <b>' + can + ' 条今日挑战可领奖</b> ›</button>';
-    }
-    if (notices) h += '<div class="ph-notices">' + notices + '</div>';
-
+    const p = P(), d = St.d(), night = St.isNight(), w = St.weather();
+    let h = '<div class="ph-wall wall' + (p.wall % 4) + (night ? ' night' : '') + '"></div>';
+    h += '<div class="ph-widget">' +
+      '<div class="ph-widget-date">周' + weekDay() + '　D' + d.day + '</div>' +
+      '<div class="ph-widget-clock">' + St.tempAt() + '°</div>' +
+      '<div class="ph-widget-weather">' + U.escape(w.name) + '　·　' +
+        U.escape(shortScene()) + '</div></div>';
     h += '<div class="ph-grid">' + APPS.map(a => {
-      const b = badge(a.id);
+      const bdg = badge(a.id);
       return '<button class="ph-app" data-ph="app:' + a.id + '" style="--appc:' + a.color + '">' +
-        (b ? '<span class="ph-badge">' + b + '</span>' : '') +
+        (bdg ? '<span class="ph-badge">' + bdg + '</span>' : '') +
         '<span class="ph-app-ic">' + a.icon + '</span>' +
         '<span class="ph-app-nm">' + U.escape(a.name) + '</span></button>';
     }).join('') + '</div>';
+    h += '<div class="ph-pages"><i class="on"></i><i></i></div>';
     return h;
   }
 
   /* ---------------- 原有的三个 App 内容 ---------------- */
+  /* ---------------- 💬 信息 ---------------- */
+  function smsHTML() {
+    const p = P(), list = p.sms || [];
+    if (smsOpen >= 0 && list[smsOpen]) {
+      const m = list[smsOpen];
+      const when = m.t ? new Date(m.t).toLocaleString('zh-CN',
+        { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+      return '<div class="ph-msg-head"><button class="ph-back" data-ph="smsback">‹</button>' +
+        '<span class="ph-msg-av">' + U.escape(m.avatar || '✉️') + '</span>' +
+        '<b>' + U.escape(m.from || '信息') + '</b></div>' +
+        '<div class="ph-msg-date">' + when + '</div>' +
+        (m.title ? '<div class="section-t">' + U.escape(m.title) + '</div>' : '') +
+        '<div class="ph-bubble">' + U.escape(m.text || '') + '</div>';
+    }
+    smsOpen = -1;
+    let h = '<div class="ph-msg-head"><b>信息</b>' +
+      '<button class="mini" style="margin-left:auto" data-ph="smsread">全部已读</button></div>';
+    if (!list.length) return h + '<div class="ph-empty">无信息</div>';
+    list.forEach((m, i) => {
+      const when = m.t ? new Date(m.t).toLocaleDateString('zh-CN',
+        { month: '2-digit', day: '2-digit' }) : '';
+      const preview = String(m.text || '').replace(/\s+/g, ' ').slice(0, 30);
+      h += '<button class="ph-msg-row" data-ph="smsopen:' + i + '">' +
+        '<span class="ph-msg-av">' + U.escape(m.avatar || '✉️') + '</span>' +
+        '<span class="ph-msg-txt"><b>' + (m.unread ? '<i class="ph-dot"></i>' : '') +
+        U.escape(m.from || '信息') + '</b><small>' + U.escape(preview) + '</small></span>' +
+        '<span class="ph-msg-meta">' + when + '　›</span></button>';
+    });
+    return h;
+  }
+
+  /* 供篮球皮肤解锁等系统调用：写一封新短信并存档 */
+  function receiveSMS(item) {
+    const p = P();
+    if (!Array.isArray(p.sms)) p.sms = [];
+    p.sms.unshift(Object.assign({ t: Date.now(), unread: true }, item || {}));
+    p.sms = p.sms.slice(0, 30);
+    St.save();
+    if (screen === 'sms') draw();
+    return true;
+  }
+
   function feedHTML() {
     const p = P();
     if (!p.feed.length) rollFeed();
-    let h = '<div class="ph-hint">下拉到底点「刷一波新的」，每条都能点赞 / 评论 / 转发。</div>';
+    let h = '';
     p.feed.forEach(id => {
       const q = byId(id); if (!q) return;
       const liked = p['like_' + id] ? ' ♥' : '';
@@ -259,9 +365,9 @@
         '<div class="ph-desc">预计 ' + Math.max(0, Math.ceil((o.at - absMin()))) + ' 游戏分钟后送达 · ' + Math.round(done * 100) + '%</div>' +
         '<div class="ph-ops"><button class="mini" data-ph="urge">📞 催一下单</button><button class="mini" data-ph="cancel">✕ 取消订单</button></div></div>';
     } else {
-      h += '<div class="ph-hint">从下面挑一份，骑手会送到你当前所在的地方（含林景园）。配送费 ¥4。</div>';
+      /* 只留列表 */
     }
-    h += '<div class="section-t">🍱 今日可送</div>';
+    h += '<div class="section-t">🍱 今日可送　·　配送费 ¥4</div>';
     menu().forEach(m => {
       const price = m.it.price + 4;
       h += '<div class="row"><div><span class="name">' + U.escape(m.it.name) + '</span>' +
@@ -281,7 +387,7 @@
   function homeHTML() {
     const d = St.d(), p = P();
     let h = '<div class="ph-home">🏠<div><b>林景园 · 我的家</b><div class="ph-desc">小区 3 栋 502 的一室一厅，床、书桌、冰箱、存钱罐和一只不怎么理人的猫。换大户型或买别墅后这里也会跟着变。</div></div></div>';
-    h += '<div class="ph-hint">回家可以睡觉回满体力、吃冰箱里的东西、往存钱罐存钱，也能直接看手机。</div>';
+
     h += '<button class="mini ph-big" data-ph="gohome">🏠 现在回家（回林景园名下的房子）</button>';
     h += '<div class="section-t">今日概览</div>';
     h += '<div class="stat-grid">' +
@@ -315,10 +421,8 @@
       '<div class="ph-flash" id="phFlash"></div></div>';
     h += '<div class="ph-filters">' + FILTERS.map((f, i) =>
       '<button class="mini' + (camFilter === i ? ' on' : '') + '" data-ph="camfilter:' + i + '">' + f.name + '</button>').join('') + '</div>';
-    h += '<div class="ph-hint">' + (spot ?
-      '📍 附近就是打卡点 <b>' + U.escape(spot.label.replace('📸 打卡 · ', '')) + '</b>，按快门会收进街区相册并掉明信片。' :
-      '取景框里是<b>此刻真实的游戏画面</b>。走近街上发亮的 📸 标记再拍，就是一次打卡；不然算随手拍。') + '</div>';
-    h += '<button class="mini ph-big ph-shutter" data-ph="shoot">📸 按快门　<small>随手拍 +心情 2 · 打卡 +明信片</small></button>';
+
+    h += '<button class="mini ph-big ph-shutter" data-ph="shoot">📸</button>';
     h += '<div class="ph-ops"><button class="mini" data-ph="app:album">🖼️ 看相册（' + p.album.length + '）</button>' +
       '<button class="mini" data-ph="camselfie">🤳 自拍一张</button></div>';
     return h;
@@ -383,7 +487,7 @@
   function albumHTML() {
     const p = P(), spots = PC.Play ? PC.Play.PHOTO_SPOTS : {};
     const taken = PC.Play ? PC.Play.ensure(St.d()).col.photos : [];
-    let h = '<div class="ph-hint">相机拍的、打卡拍的都存这里（最多 30 张）。打卡相册按街区收集，集齐 7 处有奖励。</div>';
+    let h = '';
     h += '<div class="section-t">📍 街区打卡 ' + taken.length + ' / ' + Object.keys(spots).length + '</div>';
     h += '<div class="ph-chips">' + Object.keys(spots).map(k =>
       '<span class="ph-chip' + (taken.indexOf(k) >= 0 ? ' got' : '') + '">' +
@@ -420,8 +524,7 @@
       '<button class="mini" data-ph="mrand">🔀 随机</button>' +
       '<button class="mini" data-ph="mstep:1">⏭</button></div>';
     h += '<button class="mini ph-big ph-stop" data-ph="mstop">⏹ 关掉音乐 · 恢复游戏配乐</button>';
-    h += '<div class="ph-hint">在下面点任意一首就<b>占用</b>游戏自动配乐：进店、坐地铁、昼夜天气变化都不会打断它。' +
-      '点上面的「关掉音乐」，或到 ⚙️ 设置里全局关掉声音，马上回到原本按场景播放的那首（进度续播照常生效）。</div>';
+
 
     h += '<div class="section-t">🎧 全部曲库 · ' + configured + ' / ' + M.slots.length + ' 已配置</div>';
     h += '<input id="phSearch" class="ph-input" placeholder="🔍 搜曲库 / 场景 / 店铺" value="' + U.escape(musicQuery) + '">';
@@ -440,7 +543,7 @@
       });
     });
 
-    h += '<div class="section-t">➕ 给空槽位配乐（存本机，立即生效）</div>';
+    h += '<div class="section-t">音源</div>';
     h += '<select id="phSrcSlot" class="ph-input">' + M.slots.map(s =>
       '<option value="' + U.escape(s.key) + '"' + (np.key === s.key ? ' selected' : '') + '>' +
       U.escape(s.group + ' · ' + s.name) + (M.srcFor(s.key) ? ' ✓' : '（空）') + '</option>').join('') + '</select>';
@@ -494,7 +597,7 @@
     return h;
   }
   function gamesHTML() {
-    let h = '<div class="ph-hint">小游戏就在手机屏幕里跑，分数按人生等级换钱。</div>';
+    let h = '';
     h += '<div class="ph-ops"><button class="mini" data-ph="game:coins">🕹 抢金币</button>' +
       '<button class="mini" data-ph="game:fish">🎣 捞锦鲤</button>' +
       '<button class="mini" data-ph="gachaPhone">🎰 扭蛋 ¥20</button></div>';
@@ -508,30 +611,43 @@
   function simpleApp(id) {
     const a = APP_BY_ID[id];
     const go = { bag: 'bag', earn: 'earn', estate: 'estate' }[id];
-    return '<div class="ph-empty">' + a.icon + ' <b>' + U.escape(a.name) + '</b><br>' +
-      U.escape(a.desc) + '</div>' +
-      '<div class="ph-hint">点下面会用游戏里那块完整面板打开，按 P 随时回到手机桌面。</div>' +
-      '<button class="mini ph-big" data-go="' + go + '">打开 ' + a.icon + ' ' + U.escape(a.name) + ' →</button>';
+    return '<div class="ph-set-group"><div class="ph-set-row"><span>' + a.icon + '　' +
+      U.escape(a.name) + '</span><button class="mini" data-go="' + go + '">打开 →</button></div></div>';
   }
   function settingsHTML() {
-    const M = PC.Music, np = M ? M.nowPlaying() : { enabled: true, volume: .55, manual: false };
-    let h = '<div class="section-t">🔊 声音</div>';
-    h += '<div class="ph-ops"><button class="mini" data-ph="mtoggle">' + (np.enabled ? '🔇 关掉声音' : '🔈 打开声音') + '</button>' +
-      '<button class="mini" data-ph="mstop">⏹ 恢复游戏自动配乐</button></div>';
-    h += '<div class="ph-hint">全局关掉声音也会结束 🎵 音乐 App 的手动接管，再打开时自动回到按场景播放的那首。</div>';
-    h += '<div class="section-t">🖼️ 桌面</div>';
-    h += '<div class="ph-ops"><button class="mini" data-ph="wall">🎨 换一张壁纸</button>' +
-      '<button class="mini" data-ph="albumclear">🗑 清空相册</button></div>';
-    h += '<div class="ph-desc">当前壁纸 #' + (P().wall % 4 + 1) + '　·　相册 ' + P().album.length + ' 张</div>';
-    h += '<div class="section-t">⌨️ 操作速记</div>';
-    h += '<div class="ph-desc">WASD / 摇杆 移动　A/E 交互　B 背包　C 蓝图　N 配乐　P 手机　T 目标　Esc 关闭面板</div>';
-    h += '<div class="ph-desc" style="margin-top:.5em">无限極人生 OS v2.0 · ' + PC.Title.VER.v + '　·　本地存档，刷新不丢</div>';
+    const M = PC.Music, np = M ? M.nowPlaying() : { enabled: true, volume: .55 };
+    const d = St.d(), p = P();
+    let h = '<div class="ph-set-group">' +
+      '<div class="ph-set-title">声音</div>' +
+      '<div class="ph-set-row"><span>声音</span><span class="ph-vol-row">' +
+        '<button class="mini" data-ph="vol:-">−</button><b>' + Math.round(np.volume * 100) + '%</b>' +
+        '<button class="mini" data-ph="vol:+">＋</button></span></div>' +
+      '<div class="ph-set-row"><span>全局开关</span>' +
+        '<button class="mini" data-ph="mtoggle">' + (np.enabled ? '开' : '关') + '</button></div>' +
+      '<div class="ph-set-row"><span>自动配乐</span>' +
+        '<button class="mini" data-ph="mstop">恢复</button></div>' +
+      '</div>';
+    h += '<div class="ph-set-group"><div class="ph-set-title">显示</div>' +
+      '<div class="ph-set-row"><span>墙纸</span><button class="mini" data-ph="wall">更换</button></div>' +
+      '<div class="ph-set-row"><span>相册</span><button class="mini" data-ph="albumclear">清空</button></div>' +
+      '<div class="ph-set-row"><span>图片</span><b>' + p.album.length + ' 张</b></div>' +
+      '</div>';
+    h += '<div class="ph-set-group"><div class="ph-set-title">关于本机</div>' +
+      '<div class="ph-set-row"><span>名称</span><b>Infinite Lives Phone</b></div>' +
+      '<div class="ph-set-row"><span>系统版本</span><b>' + U.escape(PC.Title.VER.v) + '</b></div>' +
+      '<div class="ph-set-row"><span>型号</span><b>IL-921</b></div>' +
+      '<div class="ph-set-row"><span>序列号</span><b>IL9212026</b></div>' +
+      '<div class="ph-set-row"><span>容量</span><b>128 GB</b></div>' +
+      '<div class="ph-set-row"><span>账户</span><b>' + U.money(d.money) + '　·　体力 ' +
+        Math.round(d.stamina) + '</b></div>' +
+      '</div>';
     return h;
   }
 
   function appHTML(id) {
     switch (id) {
       case 'feed': return feedHTML();
+      case 'sms': return smsHTML();
       case 'delivery': return deliveryHTML();
       case 'home': return homeHTML();
       case 'camera': return cameraHTML();
@@ -546,19 +662,28 @@
   }
 
   function draw() {
-    const a = APP_BY_ID[screen];
-    const night = St.isNight();
-    const body = '<div class="phone-shell' + (night ? ' ph-night' : '') + '">' + statusBar() +
+    const a = APP_BY_ID[screen], night = St.isNight();
+    const inner = '<div class="phone-shell' + (night ? ' ph-night' : '') +
+      '" style="filter:brightness(' + bright + ')">' +
+      statusBar() +
       (a ? appBar(a) + '<div class="ph-body ph-screen">' + appHTML(screen) + '</div>' + homeBar()
          : '<div class="ph-body ph-desk">' + deskHTML() + '</div>' + dockHTML()) +
       '</div>';
-    PC.UI.openPanel(a ? '📱 ' + a.name + ' · 无限極人生 OS' : '📱 无限極人生 OS · 桌面', body,
-      '<span>P / ESC 关闭</span><span>' + (a ? '← 桌面' : St.timeStr() + ' · D' + St.d().day) + '</span>');
+    const body = '<div class="phone-device"><span class="ph-power"></span>' +
+      '<div class="ph-screen">' +
+        '<div class="ph-island"></div>' + inner +
+        '<button class="ph-home-ind" data-ph="desk"></button>' +
+        (locked ? lockHTML() : '') +
+        (showNotify ? notifyHTML() : '') +
+        (showControl ? controlHTML() : '') +
+      '</div></div>';
+    PC.UI.openPanel(a ? '📱 ' + a.name : '📱 手机', body, '');
     if (screen === 'camera') { renderCamera(); if (camFlashPending) { flash(); camFlashPending = false; } }
     else if (screen === 'games') startPhoneGame();
     else if (screen === 'music') { filterSongs(); updateMusicUI(); }
   }
 
+  /* ---------------- 时间刷新 ---------------- */
   function filterSongs() {
     const q = musicQuery.trim().toLowerCase();
     document.querySelectorAll('#panelBody .ph-song').forEach(el => {
@@ -615,6 +740,8 @@
     if (!PC.UI.panelOpen || $('panelTitle').textContent.indexOf('📱') < 0) return;
     tickCount++;
     const clock = $('phClock'); if (clock) clock.textContent = St.timeStr();
+    const lc = $('phLockClock'); if (lc) lc.textContent = St.timeStr();
+    const dc = $('phDeskClock'); if (dc) dc.textContent = St.timeStr();
     if (screen === 'music') updateMusicUI();
     if (screen === 'camera' && tickCount % 12 === 0) renderCamera();
     if (screen === 'delivery' && p.pending && tickCount % 30 === 0) {
@@ -660,11 +787,36 @@
   }
 
   document.addEventListener('click', e => {
-    const b = e.target.closest('button[data-ph]'); if (!b) return;
+    const b = e.target.closest('[data-ph]'); if (!b) return;
     if (!$('panelBody') || !$('panelBody').contains(b)) return;
     PC.Audio.init();
     const act = b.dataset.ph, p = P(), d = St.d();
 
+    if (act === 'bright' || act === 'volrange') return;   // 滑块交给 input 事件
+    if (act === 'unlock') { locked = false; PC.Audio.sfx('click'); draw(); return; }
+    if (act === 'notify') { showNotify = !showNotify; showControl = false; PC.Audio.sfx('click'); draw(); return; }
+    if (act === 'control') { showControl = !showControl; showNotify = false; PC.Audio.sfx('click'); draw(); return; }
+    if (act === 'closeSheets') { showNotify = false; showControl = false; draw(); return; }
+    if (act.indexOf('cctoggle:') === 0) {
+      const i = Number(act.slice(9)); cc[i] = !cc[i];
+      if (i === 0 && cc[0]) { cc[1] = false; cc[2] = false; }
+      if ((i === 1 || i === 2) && cc[i]) cc[0] = false;
+      if (i === 4 && PC.Music && PC.Music.setEnabled) PC.Music.setEnabled(!cc[4]);
+      PC.Audio.sfx('click'); draw(); return;
+    }
+    if (act === 'cctorch') { bright = bright > 1 ? 1 : 1.22; draw(); return; }
+    if (act === 'vol:-' || act === 'vol:+') {
+      const M = PC.Music; if (M && M.setVolume) {
+        M.setVolume(Math.max(0, Math.min(1, (M.nowPlaying ? M.nowPlaying().volume : .55) + (act === 'vol:+' ? .1 : -.1))));
+      }
+      PC.Audio.sfx('click'); draw(); return;
+    }
+    if (act.indexOf('smsopen:') === 0) {
+      smsOpen = Number(act.slice(8));
+      const m = p.sms[smsOpen]; if (m) { m.unread = false; St.save(); }
+      PC.Audio.sfx('click'); draw(); return;
+    }
+    if (act === 'smsback') { smsOpen = -1; PC.Audio.sfx('click'); draw(); return; }
     if (act === 'desk') { go('desk'); return; }
     if (act.indexOf('app:') === 0) { go(act.slice(4)); return; }
     if (act.indexOf('tab:') === 0) { go(act.slice(4)); return; }   // 兼容旧调用
@@ -689,6 +841,12 @@
     if (act === 'albumclear') { p.album = []; St.save(); PC.UI.toast('胶卷清空了'); PC.Audio.sfx('error'); draw(); return; }
     if (act === 'wall') { p.wall = (p.wall + 1) % 4; St.save(); PC.Audio.sfx('click'); draw(); return; }
 
+    if (act === 'smsread' || act.indexOf('smsone:') === 0) {
+      if (act === 'smsread') p.sms.forEach(m => { m.unread = false; });
+      else { const m = p.sms[Number(act.slice(7))]; if (m) m.unread = false; }
+      if (act === 'smsread') smsOpen = -1;
+      PC.Audio.sfx('click'); St.save(); draw(); return;
+    }
     if (act === 'refresh') {
       d.minute += 3; rollFeed(); PC.Audio.sfx('screen');
       PC.UI.toast('刷到 5 条新帖子 · 游戏时间 +3 分钟'); draw(); return;
@@ -749,12 +907,24 @@
       const lab = t.nextElementSibling;
       if (lab) lab.innerHTML = lab.innerHTML.replace(/当前 \d+%/, '当前 ' + t.value + '%');
     }
+    if (t.dataset && t.dataset.ph === 'bright') {
+      bright = Number(t.value) / 100;
+      const sh = document.querySelector('#panelBody .phone-shell');
+      if (sh) sh.style.filter = 'brightness(' + bright + ')';
+      const lab = t.nextElementSibling; if (lab) lab.textContent = t.value + '%';
+    }
+    if (t.dataset && t.dataset.ph === 'volrange' && PC.Music && PC.Music.setVolume) {
+      PC.Music.setVolume(Number(t.value) / 100);
+      const lab = t.nextElementSibling; if (lab) lab.textContent = t.value + '%';
+    }
     if (t.id === 'phSearch') { musicQuery = t.value; filterSongs(); }
   });
 
   /* 挂到 UI 上，方便 HUD 按钮 / 键盘调用 */
   PC.Phone = {
-    open, toggle, tick, deliver, rollFeed, menu, POSTS, APPS,
+    open, toggle, tick, deliver, rollFeed, menu, POSTS, APPS, receiveSMS,
+    unlock: () => { locked = false; draw(); },
+    get locked() { return locked; },
     get screen() { return screen; },
     get tab() { return screen; }, set tab(v) { screen = APP_BY_ID[v] ? v : 'desk'; },
     go, draw

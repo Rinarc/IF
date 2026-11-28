@@ -9,8 +9,8 @@
   const $ = id => document.getElementById(id);
 
   const VER = PC.VERSION = {
-    v: 'v2.8.0',
-    build: 'BUILD 2026.11.28 · PWA INSTALLABLE',
+    v: 'v3.2.0',
+    build: 'BUILD 2026.11.28 · REAL PHONE SYSTEM',
     engine: 'HTML5 / CANVAS 2D',
     title: '无限極人生'
   };
@@ -32,15 +32,14 @@
 
   /* ---------- 轮播页数据 ---------- */
   const UPDATES = [
-    '◆ 做成 PWA：可安装到桌面 / 手机主屏幕，独立窗口打开',
-    '◆ manifest.webmanifest + sw.js 离线缓存，装完断网也能玩',
-    '◆ 图标占位在 icons/，把你的 logo 同名覆盖即可',
-    '◆ 标题页可安装时才出现「安装到桌面」按钮，默认隐藏',
-    '◆ 打开游戏先播工作室片头 media/opening.mp4，点按可跳过',
-    '◆ 播完视频淡出，游戏标题从黑底渐显，开场没有任何按钮',
-    '◆ 左下女/男厕所 / 2F 花园通道 / 6F 上花园下排球场',
-    '◆ 7:40 上学潮与 18:00 放学潮，校门口作息钟可跳时间',
-    '◆ 深蓝金边真校徽按你特意要求一字未动'
+    '◆ 手机重做成一台真设备：金属边框、灵动岛、状态栏图标、Home 横条',
+    '◆ 新增锁屏：大时钟 / 日期天气 / 系统卡片 / 手电与相机快捷',
+    '◆ 下拉通知中心、控制中心：开关 / 亮度 / 音量 / 墙纸',
+    '◆ 桌面换成全屏壁纸 + 时间天气小组件 + 毛玻璃 Dock + 页面圆点',
+    '◆ 信息 App 改成收件箱列表与对话气泡，设置改成「关于本机」分组',
+    '◆ 清掉手机里所有教程文案与游戏提示，只留系统本身',
+    '◆ 状态栏实时时钟、App 打开动画、设备侧键与屏幕亮度联动',
+    '◆ 篮板球权 / 局数成长 / 四套球场皮肤 / 秦磷完整进攻回合继续保留'
   ];
 
   function playerRows() {
@@ -75,7 +74,7 @@
 
   const PAGES = [
     { key: 'VERSION', tag: 'SYSTEM', title: '无限極人生', en: 'INFINITY LIVES / TITLE SCREEN' },
-    { key: 'UPDATE', tag: 'PATCH', title: '本次更新', en: 'WHAT IS NEW IN v2.8.0' },
+    { key: 'UPDATE', tag: 'PATCH', title: '本次更新', en: 'WHAT IS NEW IN v3.2.0' },
     { key: 'STATUS', tag: 'SAVE', title: '主角状态', en: 'PLAYER STATUS / LOCAL SAVE' }
   ];
 
