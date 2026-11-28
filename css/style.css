@@ -444,3 +444,346 @@ button{font-family:inherit;cursor:pointer}
   font-family:inherit;cursor:pointer}
 .install-btn:hover{background:#fff3c4}
 .install-btn.hidden{display:none!important}
+
+/* ===== 横屏提示：竖屏时右上角小卡，不阻断游戏 ===== */
+#landscapeTip{position:absolute;right:.5em;top:4.4em;z-index:52;width:min(15.5em,74vw);
+  display:flex;gap:.55em;align-items:flex-start;padding:.55em .6em;
+  background:rgba(16,19,47,.94);border:2px solid #5b57ad;
+  box-shadow:3px 3px 0 #050617,0 0 18px rgba(91,87,173,.4);color:#e9e6ff;
+  animation:ltIn .35s ease}
+#landscapeTip.hidden{display:none!important}
+@keyframes ltIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.lt-icon{font-size:1.7em;line-height:1;color:#ffd25a;text-shadow:2px 2px 0 #2a2a5e;flex:none}
+.lt-body{display:flex;flex-direction:column;gap:.2em;min-width:0}
+.lt-body b{font-size:.84em;letter-spacing:.06em;color:#fff3c4}
+.lt-body span{font-size:.68em;line-height:1.45;color:#a9b6ff}
+.lt-btns{display:flex;gap:.35em;margin-top:.3em;flex-wrap:wrap}
+.lt-btns button{font-family:inherit;font-size:.68em;padding:.22em .5em;cursor:pointer;
+  border:1px solid #5b57ad;background:#2a2a5e;color:#e9e6ff}
+.lt-btns button:first-child{background:#ffd25a;color:#10122b;border-color:#fff3c4}
+.lt-btns button:hover{filter:brightness(1.15)}
+@media (orientation:landscape){#landscapeTip{display:none!important}}
+
+
+/* ===== 汾阳中学 · 半场街头篮球 ===== */
+#bbOverlay{position:absolute;inset:0;z-index:55;background:#05060f;overflow:hidden;
+  touch-action:none;user-select:none;-webkit-user-select:none}
+#bbOverlay.hidden{display:none!important}
+#bbCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+  image-rendering:pixelated;image-rendering:crisp-edges}
+#bbFade{position:absolute;inset:0;background:#05060f;opacity:0;pointer-events:none;
+  transition:opacity .62s ease;z-index:9}
+#bbOverlay.bb-in #bbFade{opacity:1}
+#bbOverlay.bb-out #bbFade{opacity:1}
+
+#bbTop{position:absolute;left:0;top:0;width:100%;z-index:6;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:.5em;
+  padding:.5em .7em;color:#f4f1e4;pointer-events:none}
+#bbScore{background:rgba(16,19,47,.86);border:2px solid #5b57ad;padding:.2em .6em;
+  font-size:clamp(12px,2.6vmin,20px);letter-spacing:.06em;white-space:nowrap;
+  box-shadow:3px 3px 0 #050617}
+#bbScore b{color:#ffd25a;font-size:1.25em}
+.bb-colon{color:#a9b6ff;margin:0 .3em}
+.bb-ai b{color:#ffd25a}
+#bbMeta{position:absolute;left:.7em;top:2.65em;font-size:clamp(9px,1.9vmin,14px);color:#e9d9b8;
+  background:rgba(16,19,47,.72);padding:.15em .5em;border:1px solid #2b3a72;white-space:nowrap}
+#bbTop .bb-top-btns{display:flex;gap:.3em;flex:none;pointer-events:auto}
+.bb-top-btns button{font-family:inherit;font-size:clamp(8px,1.7vmin,12px);white-space:nowrap;
+  padding:.3em .42em;background:#2a2a5e;color:#e9e6ff;border:1px solid #5b57ad;cursor:pointer}
+.bb-top-btns button:hover{background:#3b3b8f}
+
+#bbCenterMsg{position:absolute;left:50%;top:17%;transform:translate(-50%,-50%);z-index:7;
+  font-size:clamp(10px,2.1vmin,17px);font-weight:bold;letter-spacing:.06em;
+  color:#fff3c4;padding:.3em .7em;background:rgba(10,12,34,.72);
+  border:1px solid rgba(91,87,173,.65);box-shadow:2px 2px 0 #050617;
+  pointer-events:none;text-align:center;white-space:pre-line;opacity:0;transition:opacity .2s}
+#bbCenterMsg.big{top:31%;font-size:clamp(14px,3.4vmin,28px);letter-spacing:.1em;
+  background:none;border:0;box-shadow:none;
+  text-shadow:3px 3px 0 #2a2a5e,0 0 14px rgba(255,210,90,.6)}
+#bbCenterMsg.on{opacity:1}
+
+#bbLeft,#bbRight{position:absolute;bottom:0;z-index:6;pointer-events:none}
+#bbLeft{left:0;width:42%;height:52%}
+#bbRight{right:0;width:54%;height:66%}
+.bb-pad{position:absolute;width:clamp(86px,21vmin,138px);height:clamp(86px,21vmin,138px);
+  border-radius:50%;border:2px solid rgba(233,224,204,.55);
+  background:radial-gradient(circle,rgba(59,59,143,.42),rgba(10,12,34,.72));
+  box-shadow:inset 0 0 0 3px rgba(10,10,30,.4),3px 3px 0 rgba(5,6,23,.7);
+  pointer-events:auto;touch-action:none}
+.bb-pad .bb-ring{position:absolute;inset:18%;border-radius:50%;
+  border:1px dashed rgba(169,182,255,.35)}
+.bb-pad .bb-knob{position:absolute;left:50%;top:50%;width:38%;height:38%;
+  border-radius:50%;transform:translate(-50%,-50%);
+  background:#ffd25a;border:2px solid #fff3c4;box-shadow:0 0 10px rgba(255,210,90,.5)}
+.bb-pad>span{position:absolute;left:50%;bottom:-1.45em;transform:translateX(-50%);
+  font-size:clamp(8px,1.6vmin,12px);color:#a9b6ff;white-space:nowrap}
+#bbMove{left:7%;bottom:12%}
+#bbAct{right:6%;bottom:11%;border-color:rgba(255,210,90,.6);
+  background:radial-gradient(circle,rgba(194,69,63,.32),rgba(10,12,34,.74))}
+#bbAct .bb-knob{background:#e2564d;border-color:#ffd25a}
+
+.bb-btn{font-family:inherit;cursor:pointer;pointer-events:auto;
+  position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.1em;min-width:clamp(58px,12vmin,84px);padding:.4em .55em;
+  color:#10122b;background:#e9e0cc;border:2px solid #fff3c4;
+  box-shadow:3px 3px 0 #2a2a5e;line-height:1.1}
+.bb-btn b{font-size:clamp(10px,2vmin,15px)}
+.bb-btn small{font-size:clamp(7px,1.35vmin,10px);opacity:.75;letter-spacing:.08em}
+.bb-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #2a2a5e}
+.bb-btn.shoot{background:#ffd25a;border-color:#fff3c4;min-width:clamp(66px,14vmin,96px);
+  min-height:clamp(44px,9vmin,62px)}
+.bb-btn.shoot.aiming{background:#7fe0c8;animation:bbPulse .25s infinite alternate}
+.bb-btn.shoot.defend{background:#a9b6ff;border-color:#d8d2ff;color:#10122b}
+.bb-btn.hot{box-shadow:0 0 0 3px rgba(255,138,122,.5),3px 3px 0 #2a2a5e}
+#bbTop.defending #bbScore{border-color:#e2564d;box-shadow:3px 3px 0 #050617,0 0 12px rgba(226,86,77,.4)}
+@keyframes bbPulse{to{box-shadow:0 0 0 4px rgba(127,224,200,.55),3px 3px 0 #2a2a5e}}
+.bb-side-btns{position:absolute;right:39%;bottom:12%;display:flex;flex-direction:column;gap:.5em}
+.bb-side-btns .bb-btn{position:relative;right:auto;bottom:auto}
+#bbShoot{right:6%;bottom:53%}
+
+#bbHint{position:absolute;left:50%;bottom:.4em;transform:translateX(-50%);z-index:6;
+  font-size:clamp(8px,1.6vmin,12px);color:#a9b6ff;background:rgba(10,12,34,.7);
+  padding:.2em .6em;pointer-events:none;white-space:nowrap;text-align:center}
+
+@media (orientation:portrait){
+  #bbLeft{height:40%}#bbRight{height:46%}
+  #bbShoot{right:5%;bottom:56%}
+  .bb-side-btns{right:50%;bottom:9%}
+  #bbHint{white-space:normal;width:96%}
+}
+
+/* ==========================================================
+   手机系统外壳 v3.2 —— 一台设备，不是一块网页面板
+   置于末尾，覆盖旧的 #panel.phone-mode / .ph-* 规则
+   ========================================================== */
+#panel.phone-mode{
+  /* fixed 才能脱离 #app 的 overflow:hidden，让整台设备完整显示 */
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(332px,88vw);height:min(692px,90vh);max-height:none;max-width:none;
+  background:transparent;border:0;box-shadow:none;padding:0;overflow:visible;
+  display:flex;flex-direction:column;color:#e9e6ff;font-size:.92em
+}
+#panel.phone-mode .panel-head,
+#panel.phone-mode .panel-foot{display:none!important}
+#panel.phone-mode .panel-body{
+  display:block;padding:0;background:transparent;overflow:hidden;flex:1;min-height:0;height:100%
+}
+/* 设备边框与侧键 */
+.phone-device{position:relative;width:100%;height:100%;box-sizing:border-box;padding:9px;
+  border-radius:46px;
+  background:linear-gradient(145deg,#61667f,#1b1d2e 17%,#0c0e19 56%,#3c405c);
+  box-shadow:0 0 0 1px rgba(255,255,255,.13),0 20px 48px rgba(0,0,0,.74),inset 0 0 0 2px rgba(0,0,0,.55)}
+.phone-device:before,.phone-device:after{content:'';position:absolute;left:-3px;width:3px;border-radius:2px;
+  background:linear-gradient(#70759a,#25283c)}
+.phone-device:before{top:112px;height:32px}
+.phone-device:after{top:160px;height:62px}
+.ph-power{position:absolute;right:-3px;top:154px;width:3px;height:76px;border-radius:2px;
+  background:linear-gradient(#70759a,#25283c)}
+.ph-screen{position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;
+  background:#0b0e22;display:flex;flex-direction:column;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+/* 灵动岛 */
+.ph-island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:88px;height:23px;
+  border-radius:14px;background:#05060c;z-index:50;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.6)}
+.ph-island:after{content:'';position:absolute;right:9px;top:8px;width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#2a3a68,#070a14 72%);
+  box-shadow:0 0 0 1px rgba(120,150,255,.2)}
+/* Home Indicator */
+.ph-home-ind{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:112px;height:4px;
+  border-radius:3px;background:rgba(255,255,255,.82);border:0;padding:0;z-index:50;cursor:pointer}
+.ph-home-ind:active{opacity:.45}
+@keyframes phUp{0%,100%{transform:translate(-50%,0);opacity:.65}50%{transform:translate(-50%,-6px);opacity:1}}
+
+/* 屏幕内层 */
+.phone-shell{position:relative;max-width:none;width:100%;height:100%;flex:1;min-height:0;
+  display:flex;flex-direction:column;border:0;border-radius:0;background:#0e1130;
+  box-shadow:none;overflow:hidden;margin:0}
+.phone-shell.ph-night{background:#080a1c;border-color:transparent}
+/* 状态栏：真图标，不写 5G ▮▮▮ */
+.ph-status{height:38px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:0 17px;background:transparent;color:#fff;position:relative;z-index:20;
+  font-size:.72em;letter-spacing:0}
+.phone-shell.ph-night .ph-status{background:transparent}
+.ph-sb-left,.ph-sb-right{display:flex;align-items:center;gap:7px}
+.ph-sb-left{background:none;border:0;color:#fff;font:inherit;font-weight:700;font-size:1.06em;
+  padding:0;cursor:pointer;letter-spacing:.01em}
+.ph-signal{display:flex;align-items:flex-end;gap:2px;height:11px}
+.ph-signal i{width:3px;background:#fff;border-radius:1px;display:block}
+.ph-signal i:nth-child(1){height:4px}
+.ph-signal i:nth-child(2){height:6px}
+.ph-signal i:nth-child(3){height:9px}
+.ph-signal i:nth-child(4){height:11px}
+.ph-wifi{width:13px;height:8px;border:2px solid #fff;border-bottom:0;
+  border-radius:12px 12px 0 0;position:relative;transform:scale(.9)}
+.ph-wifi:after{content:'';position:absolute;bottom:-5px;left:3px;width:3px;height:3px;
+  border-radius:50%;background:#fff}
+.ph-batt{position:relative;width:23px;height:11px;border:1.5px solid rgba(255,255,255,.85);
+  border-radius:3px;background:none;padding:0;cursor:pointer}
+.ph-batt:after{content:'';position:absolute;right:-4px;top:2.5px;width:2px;height:5px;
+  background:rgba(255,255,255,.55);border-radius:0 2px 2px 0}
+.ph-batt-fill{position:absolute;left:1.5px;top:1.5px;bottom:1.5px;background:#fff;border-radius:1px}
+.ph-batt.low .ph-batt-fill{background:#ff6b5e}
+.ph-wallet,.ph-homebar,.ph-hint{display:none!important}
+/* App 顶栏：返回箭头 + 标题，不写说明 */
+.ph-appbar{height:42px;flex:none;display:flex;align-items:center;gap:9px;padding:0 12px;
+  background:rgba(20,23,55,.7);border-bottom:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(14px);font-size:.82em}
+.phone-shell.ph-night .ph-appbar{background:rgba(12,15,40,.7)}
+.ph-appbar b{color:#fff;font-weight:600;white-space:nowrap;font-size:.96em}
+.ph-appbar span{margin-left:auto;color:rgba(233,230,255,.5);font-size:.8em;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;max-width:9em}
+.ph-back{background:none;border:0;color:#7fe0c8;font:inherit;font-size:1.35em;
+  line-height:1;padding:0 .15em;cursor:pointer}
+.ph-appbar .mini{font-size:.7em;padding:.16em .5em}
+/* App 内容区 */
+.ph-body{flex:1;min-height:0;max-height:none!important;overflow:auto;background:#0e1130;
+  padding:.65em .75em 1.4em;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.ph-body::-webkit-scrollbar{width:4px}
+.ph-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
+.phone-shell.ph-night .ph-body.ph-screen{background:#0a0d24}
+.ph-body.ph-screen{animation:phAppIn .22s ease-out}
+@keyframes phAppIn{from{opacity:.4;transform:scale(.97) translateY(7px)}to{opacity:1;transform:none}}
+.ph-body.ph-desk{padding:0;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#0b0e22}
+/* 桌面：壁纸铺满 + 时间天气小组件 */
+.ph-wall{position:absolute;inset:0;padding:0;text-align:left;overflow:hidden;z-index:0;color:#fff;
+  background:linear-gradient(165deg,#274a86,#5b4fb3 48%,#4fb8a8)}
+.ph-wall.wall0{background:linear-gradient(165deg,#274a86,#5b4fb3 48%,#4fb8a8)}
+.ph-wall.wall1{background:linear-gradient(165deg,#8a4b2f,#d99b1f 52%,#e2564d)}
+.ph-wall.wall2{background:linear-gradient(165deg,#123a52,#3d9a94 52%,#7fe0c8)}
+.ph-wall.wall3{background:linear-gradient(165deg,#2a1c47,#a0448a 52%,#ffb27a)}
+.ph-wall.night{filter:brightness(.62) saturate(.9)}
+.ph-wall:after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 22% 18%,rgba(255,255,255,.16),transparent 46%),
+             repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px)}
+.ph-widget{position:relative;z-index:2;padding:16px 19px 4px;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+.ph-widget-date{font-size:.74em;opacity:.92;letter-spacing:.04em}
+.ph-widget-clock{font-size:2.65em;font-weight:250;line-height:1.08;letter-spacing:-.035em}
+.ph-widget-weather{font-size:.74em;opacity:.92;margin-top:3px}
+.ph-grid{position:relative;z-index:2;margin-top:auto;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:13px 9px;padding:10px 14px 6px;background:transparent}
+.ph-app{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;min-height:0;background:none;border:0;box-shadow:none;color:#fff;cursor:pointer;
+  font-family:inherit;padding:0;transition:transform .1s}
+.ph-app:active{transform:scale(.88)}
+.ph-app-ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;
+  justify-content:center;font-size:1.4em;text-shadow:none;
+  background:linear-gradient(160deg,var(--appc),rgba(18,20,45,.86));
+  box-shadow:0 4px 10px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.28)}
+.ph-app-nm{font-size:.64em;letter-spacing:.02em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.65)}
+.ph-badge{top:-4px;right:-3px;min-width:1.3em;height:1.3em;background:#e2564d;color:#fff;
+  border-radius:50%;font-size:.62em;font-weight:700;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2px rgba(10,12,34,.55)}
+.ph-pages{position:relative;z-index:2;display:flex;justify-content:center;gap:5px;padding:2px 0 9px}
+.ph-pages i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.42)}
+.ph-pages i.on{background:#fff}
+/* Dock 毛玻璃 */
+.ph-dock{position:relative;z-index:3;margin:0 10px 15px;padding:9px 8px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-radius:22px;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.2)}
+.ph-dock-app{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;
+  color:#fff;padding:0;cursor:pointer;font-family:inherit}
+.ph-dock-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:1.25em;background:linear-gradient(160deg,var(--appc),rgba(18,20,45,.8));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.ph-dock-app small{font-size:.58em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.ph-dock-app.on .ph-dock-ic{outline:2px solid rgba(255,255,255,.75);outline-offset:1px}
+.ph-notices{display:none!important}
+.ph-notify{display:none!important}
+/* 锁屏 */
+.ph-lock{position:absolute;inset:0;z-index:40;overflow:hidden;color:#fff;
+  background:linear-gradient(170deg,#1d2c56,#41305f 46%,#0b1029)}
+.ph-lock:before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 28% 22%,rgba(127,224,200,.22),transparent 48%),
+             radial-gradient(circle at 78% 72%,rgba(255,124,229,.18),transparent 46%)}
+.ph-lock-tap{position:absolute;inset:0;width:100%;height:100%;background:none;border:0;z-index:1;cursor:pointer}
+.ph-lock-inner{position:absolute;inset:0;z-index:2;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;padding-top:70px;text-shadow:0 2px 12px rgba(0,0,0,.4)}
+.ph-lock-date{font-size:.82em;opacity:.9}
+.ph-lock-clock{font-size:3.75em;font-weight:200;line-height:1.06;letter-spacing:-.045em}
+.ph-lock-weather{font-size:.76em;opacity:.86;margin-top:4px}
+.ph-lock-cards{position:absolute;left:12px;right:12px;bottom:100px;display:flex;flex-direction:column;gap:6px;z-index:2;pointer-events:none}
+.ph-lock-card{background:rgba(255,255,255,.13);backdrop-filter:blur(14px);border-radius:14px;
+  padding:8px 11px;font-size:.7em;display:flex;gap:9px;align-items:center;
+  border:1px solid rgba(255,255,255,.1)}
+.ph-lock-card i{font-style:normal;font-size:1.25em}
+.ph-lock-card b{display:block}.ph-lock-card small{opacity:.72;font-size:.9em}
+.ph-lock-quick{position:absolute;bottom:36px;left:0;right:0;display:flex;justify-content:space-between;
+  padding:0 28px;z-index:3}
+.ph-lock-quick button{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.32);
+  border:1px solid rgba(255,255,255,.2);color:#fff;font-size:1em;cursor:pointer;pointer-events:auto;
+  font-family:inherit}
+.ph-lock-quick button:active{background:rgba(255,255,255,.25)}
+.ph-lock-status{position:absolute;top:13px;right:18px;z-index:3;pointer-events:none;
+  display:flex;align-items:center;gap:7px;color:#fff}
+.ph-lock-status .ph-signal,.ph-lock-status .ph-wifi{margin:0}
+.ph-lock-bar{display:none}
+/* 通知中心 / 控制中心 */
+.ph-overlay{position:absolute;inset:0;z-index:45}
+.ph-overlay-bg{position:absolute;inset:0;width:100%;height:100%;background:rgba(4,6,20,.62);
+  border:0;backdrop-filter:blur(3px);cursor:pointer}
+.ph-sheet,.ph-cc{position:absolute;left:8px;right:8px;top:46px;max-height:80%;overflow:auto;
+  background:rgba(24,27,58,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:12px 14px 16px;
+  box-shadow:0 18px 44px rgba(0,0,0,.55);animation:phSheetIn .2s ease-out}
+@keyframes phSheetIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.ph-sheet-handle{width:36px;height:4px;border-radius:3px;background:rgba(255,255,255,.35);margin:0 auto 10px}
+.ph-sheet-date{font-size:.7em;opacity:.65;margin-bottom:9px;letter-spacing:.04em}
+.ph-ncard{background:rgba(255,255,255,.09);border-radius:14px;padding:9px 11px;margin-bottom:7px;
+  display:flex;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.06)}
+.ph-ncard i{font-style:normal;font-size:1.3em}
+.ph-ncard b{display:block;font-size:.78em}.ph-ncard small{font-size:.68em;opacity:.7}
+.ph-ncard .mini{margin-left:auto;font-size:.66em}
+.ph-cc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ph-cc-t{aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.1);color:#fff;font-size:.6em;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;font-family:inherit;padding:0}
+.ph-cc-t i{font-style:normal;font-size:1.5em;line-height:1}
+.ph-cc-t.on{background:#4fb8a8;color:#07151a;border-color:rgba(255,255,255,.3)}
+.ph-cc-t.mute.on{background:#e2564d;color:#fff}
+.ph-cc-slider{margin-top:10px;background:rgba(255,255,255,.1);border-radius:14px;padding:9px 11px;
+  display:flex;align-items:center;gap:9px;font-size:.72em}
+.ph-cc-slider input[type=range]{flex:1;accent-color:#7fe0c8;min-width:0}
+.ph-cc-quick{display:flex;gap:8px;margin-top:10px}
+.ph-cc-quick button{flex:1;border-radius:14px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.1);color:#fff;padding:9px 0;font-size:.7em;cursor:pointer;
+  font-family:inherit}
+/* 设置分组 / 信息列表 */
+.ph-set-group{background:rgba(255,255,255,.06);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.ph-set-title{font-size:.66em;opacity:.55;padding:10px 12px 4px;letter-spacing:.1em;text-transform:uppercase}
+.ph-set-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;
+  border-bottom:1px solid rgba(255,255,255,.06);font-size:.78em}
+.ph-set-row:last-child{border-bottom:0}
+.ph-set-row b{font-weight:500;opacity:.72;font-size:.92em;text-align:right}
+.ph-set-row .mini{font-size:.7em}
+.ph-vol-row{display:flex;align-items:center;gap:8px}
+.ph-vol-row .mini{padding:.1em .5em}
+.ph-msg-row{display:flex;align-items:center;gap:10px;width:100%;padding:9px 3px;
+  background:none;border:0;border-bottom:1px solid rgba(255,255,255,.07);color:#e9e6ff;
+  text-align:left;cursor:pointer;font-family:inherit}
+.ph-msg-row:active{background:rgba(255,255,255,.06)}
+.ph-msg-av{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:1.1em;background:linear-gradient(160deg,#5b57ad,#2a2a5e)}
+.ph-msg-txt{flex:1;min-width:0}
+.ph-msg-txt b{display:block;font-size:.8em}
+.ph-msg-txt small{display:block;font-size:.7em;opacity:.58;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-msg-meta{font-size:.66em;opacity:.55;text-align:right;flex:none}
+.ph-dot{width:8px;height:8px;border-radius:50%;background:#4aa8ff;display:inline-block;margin-right:5px}
+.ph-bubble{background:rgba(255,255,255,.1);border-radius:16px 16px 16px 4px;padding:11px 13px;
+  font-size:.8em;line-height:1.65;margin:8px 0}
+.ph-msg-date{font-size:.66em;opacity:.5;text-align:center;margin:6px 0}
+.ph-empty{text-align:center;opacity:.42;padding:2.4em 0;font-size:.78em}
+.ph-msg-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ph-msg-head .ph-back{font-size:1.2em}
+
+@media (max-width:420px){
+  #panel.phone-mode{width:min(320px,90vw);height:min(660px,88vh)}
+  .phone-device{padding:7px;border-radius:38px}
+  .ph-screen{border-radius:31px}
+  .ph-grid{gap:11px 7px;padding:9px 12px 5px}
+  .ph-app-ic{width:43px;height:43px;border-radius:12px}
+  .ph-dock{margin:0 8px 14px}
+  .ph-lock-clock{font-size:3.3em}
+}
