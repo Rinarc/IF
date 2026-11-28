@@ -437,3 +437,10 @@ button{font-family:inherit;cursor:pointer}
 #app.opening-active #help{opacity:0;pointer-events:none}
 #app.opening-active #help *{pointer-events:none}
 #app.instant #help{transition:none}
+
+/* ===== PWA 安装按钮：默认隐藏，浏览器判定可安装时才显示 ===== */
+.install-btn{display:block;margin:.55em auto 0;padding:.4em 1.1em;font-size:.76em;letter-spacing:.08em;
+  color:#10122b;background:#ffd25a;border:2px solid #fff3c4;box-shadow:3px 3px 0 #2a2a5e;
+  font-family:inherit;cursor:pointer}
+.install-btn:hover{background:#fff3c4}
+.install-btn.hidden{display:none!important}
