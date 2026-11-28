@@ -9,8 +9,8 @@
   const $ = id => document.getElementById(id);
 
   const VER = PC.VERSION = {
-    v: 'v2.7.0',
-    build: 'BUILD 2026.11.27 · OPENING MOVIE',
+    v: 'v2.8.0',
+    build: 'BUILD 2026.11.28 · PWA INSTALLABLE',
     engine: 'HTML5 / CANVAS 2D',
     title: '无限極人生'
   };
@@ -32,14 +32,14 @@
 
   /* ---------- 轮播页数据 ---------- */
   const UPDATES = [
-    '◆ 打开游戏先播放工作室开场视频 media/opening.mp4',
-    '◆ 开场只有视频：没有按钮、没有文字、没有跳过提示',
-    '◆ 点按屏幕任意位置 / 按任意键都能跳过片头',
-    '◆ 播完自动淡出视频，游戏标题从黑底渐显',
-    '◆ 视频缺失或无法播放也不卡黑屏，直接进标题',
-    '◆ 左下角女/男厕所 / 2F 花园通道 / 6F 上花园下排球场',
+    '◆ 做成 PWA：可安装到桌面 / 手机主屏幕，独立窗口打开',
+    '◆ manifest.webmanifest + sw.js 离线缓存，装完断网也能玩',
+    '◆ 图标占位在 icons/，把你的 logo 同名覆盖即可',
+    '◆ 标题页可安装时才出现「安装到桌面」按钮，默认隐藏',
+    '◆ 打开游戏先播工作室片头 media/opening.mp4，点按可跳过',
+    '◆ 播完视频淡出，游戏标题从黑底渐显，开场没有任何按钮',
+    '◆ 左下女/男厕所 / 2F 花园通道 / 6F 上花园下排球场',
     '◆ 7:40 上学潮与 18:00 放学潮，校门口作息钟可跳时间',
-    '◆ 四宫格篮球场 / 完整红砖楼体 / 六层 83 间房可进',
     '◆ 深蓝金边真校徽按你特意要求一字未动'
   ];
 
@@ -75,7 +75,7 @@
 
   const PAGES = [
     { key: 'VERSION', tag: 'SYSTEM', title: '无限極人生', en: 'INFINITY LIVES / TITLE SCREEN' },
-    { key: 'UPDATE', tag: 'PATCH', title: '本次更新', en: 'WHAT IS NEW IN v2.7.0' },
+    { key: 'UPDATE', tag: 'PATCH', title: '本次更新', en: 'WHAT IS NEW IN v2.8.0' },
     { key: 'STATUS', tag: 'SAVE', title: '主角状态', en: 'PLAYER STATUS / LOCAL SAVE' }
   ];
 
